@@ -1,8 +1,8 @@
 <?xml version='1.0' standalone='yes'?>
 <!DOCTYPE PLUGIN [
-  <!ENTITY name      "it87-driver">
-  <!ENTITY author    "ich777">
-  <!ENTITY version   "2022.11.02">
+  <!ENTITY name      "asustor-it87-driver">
+  <!ENTITY author    "mrmstn">
+  <!ENTITY version   "2023.06.01">
   <!ENTITY gitURL    "https://github.com/&author;/unraid-&name;/raw/master">
   <!ENTITY pluginURL "&gitURL;/&name;.plg">
   <!ENTITY plugin    "/boot/config/plugins/&name;">
@@ -36,7 +36,7 @@ Source: https://github.com/frankcrawford/it87
 <INLINE>
 
 download() {
-#Download IT87 Drivers
+#Download asustor-it87 Drivers
 if wget -q -nc --show-progress --progress=bar:force:noscroll -O "&packages;/${KERNEL_V%%-*}/${LAT_PACKAGE}" "${DL_URL}/${LAT_PACKAGE}" ; then
   wget -q -nc --show-progress --progress=bar:force:noscroll -O "&packages;/${KERNEL_V%%-*}/${LAT_PACKAGE}.md5" "${DL_URL}/${LAT_PACKAGE}.md5"
   if [ "$(md5sum &packages;/${KERNEL_V%%-*}/${LAT_PACKAGE} | awk '{print $1}')" != "$(cat &packages;/${KERNEL_V%%-*}/${LAT_PACKAGE}.md5 | awk '{print $1}')" ]; then
@@ -46,10 +46,10 @@ if wget -q -nc --show-progress --progress=bar:force:noscroll -O "&packages;/${KE
     exit 1
   fi
   echo
-  echo "-------------------Sucessfully downloaded IT87 Drivers-------------------"
+  echo "-------------------Sucessfully downloaded asustor-it87 Drivers-------------------"
 else
   echo
-  echo "-----------------------Can't download IT87 Drivers-----------------------"
+  echo "-----------------------Can't download asustor-it87 Drivers-----------------------"
   rm -rf &plugin; &emhttp;
   exit 1
 fi
@@ -57,32 +57,32 @@ fi
 
 check() {
 if ! ls -1 &packages;/${KERNEL_V%%-*}/ | grep -q "${PACKAGE}" ; then
-  LAT_PACKAGE="$(wget -qO- https://api.github.com/repos/ich777/unraid-it87-driver/releases/tags/${KERNEL_V} | jq -r '.assets[].name' | grep "${PACKAGE}" | grep -E -v '\.md5$' | sort -V | tail -1)"
+  LAT_PACKAGE="$(wget -qO- https://api.github.com/repos/&author;/unraid-&name;/releases/tags/${KERNEL_V} | jq -r '.assets[].name' | grep "${PACKAGE}" | grep -E -v '\.md5$' | sort -V | tail -1)"
   echo
-  echo "-----------------------Downloading IT87 Drivers!-------------------------"
+  echo "-----------------------Downloading asustor-it87 Drivers!-------------------------"
   echo "---------This could take some time, please don't close this window!----------"
   download
 else
   echo
-  echo "-----------------------IT87 Drivers found locally------------------------"
+  echo "-----------------------asustor-it87 Drivers found locally------------------------"
 fi
 }
 
 install() {
-#Install IT87 Drivers
-/sbin/modprobe -rf it87 2>/dev/null
+#Install ASUSTOR IT87 Drivers
+/sbin/modprobe -rf asustor-it87 2>/dev/null
 /sbin/installpkg "&packages;/${KERNEL_V%%-*}/${PACKAGE}*.txz"
 depmod -a
 }
 
 activate() {
-/sbin/modprobe it87 ignore_resource_conflict=1 2>/dev/null
+/sbin/modprobe asustor-it87 ignore_resource_conflict=1 2>/dev/null
 }
 
 # Define Variables
 KERNEL_V="$(uname -r)"
-PACKAGE="it87"
-DL_URL="https://github.com/ich777/unraid-it87-driver/releases/download/$KERNEL_V"
+PACKAGE="asustor-it87"
+DL_URL="https://github.com/&author;/unraid-&name;/releases/download/$KERNEL_V"
 
 if [ ! -d "&packages;/${KERNEL_V%%-*}" ]; then
   mkdir -p "&packages;/${KERNEL_V%%-*}"
@@ -94,11 +94,11 @@ rm -rf $(ls -d &packages;/* | grep -v "${KERNEL_V%%-*}")
 #Check if IT87 Drivers are already downloaded
 check
 
-if ! modinfo it87 | grep -q "mmio" >/dev/null 2>&amp;1 ; then
+if ! modinfo asustor-it87 | grep -q "mmio" >/dev/null 2>&amp;1 ; then
   install > /dev/null
 fi
 
-if ! lsmod | grep "it87" >/dev/null 2>&amp;1 ; then
+if ! lsmod | grep "asustor-it87" >/dev/null 2>&amp;1 ; then
   activate
 fi
 
