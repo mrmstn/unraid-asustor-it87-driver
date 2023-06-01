@@ -1,5 +1,6 @@
-# Unraid IT87 Driver plugin
+# Unraid ASUSTOR IT87 Driver plugin
 
-This is the repository for the Unraid IT87 Driver plugin based on: https://github.com/frankcrawford/it87
-
-Support Thread: https://forums.unraid.net/topic/92865-support-ich777-nvidiadvbzfsiscsimft-kernel-helperbuilder-docker/
+This is the repository for the Unraid ASUSTOR IT87 Driver plugin: 
+It combines these two repos together:
+* https://github.com/ich777/unraid-it87-driver
+* https://github.com/mafredri/asustor-platform-driver
