@@ -2,7 +2,7 @@
 set -e
 
 readonly BUILD_DIR="${1}"
-readonly PLUGIN_VERSION="2023.06.02"
+readonly PLUGIN_VERSION="2023.06.05"
 readonly OUTPUT_DIR="/output/pkg"
 readonly TARGET_KERNEL="5.19.17-Unraid"
 readonly BZROOT="/usr/src/stock/${UNRAID_VERSION}/root"
