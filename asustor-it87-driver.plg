@@ -2,7 +2,7 @@
 <!DOCTYPE PLUGIN [
   <!ENTITY name      "asustor-it87-driver">
   <!ENTITY author    "mrmstn">
-  <!ENTITY version   "2023.06.01">
+  <!ENTITY version   "2023.06.05">
   <!ENTITY gitURL    "https://github.com/&author;/unraid-&name;/raw/master">
   <!ENTITY pluginURL "&gitURL;/&name;.plg">
   <!ENTITY plugin    "/boot/config/plugins/&name;">
@@ -13,22 +13,25 @@
 <PLUGIN  name="&name;" author="&author;" version="&version;" pluginURL="&pluginURL;" min="6.10.3">
 
 <CHANGES>
+###2023.06.05
+- Improves packaging mechanism
 
-###2022.11.02
-- Added activation from module if it isn't activated already on Plugin installation with the option 'ignore_resource_conflict=1'
-
-###2022.09.09
+###2023.06.02
 - Initial release
 
 </CHANGES>
 
 <FILE Name="&emhttp;/README.md">
 <INLINE>
-**ITE IT87 Driver**
+**ASUSTOR IT87 Driver Plugin**
 
-This package contains a modified version from the ITE IT87 Drivers to get compatibility with chips like IT8686E,.. and installs them for using it with the Dynamix System Temperature Plugin.  
-  
-Source: https://github.com/frankcrawford/it87
+This plugin for Unraid provides support for the ASUSTOR IT87 chipset, allowing users to monitor and control the hardware sensors of ASUSTOR NAS devices. It enables the retrieval of temperature, fan speed, and voltage data from the IT87 chipset, providing valuable insights into the system's health and performance.
+
+This is the repository for the Unraid ASUSTOR IT87 Driver Plugin:
+
+It combines these two repos together:
+* https://github.com/ich777/unraid-it87-driver
+* https://github.com/mafredri/asustor-platform-driver
 </INLINE>
 </FILE>
 
