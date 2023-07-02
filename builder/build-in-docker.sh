@@ -11,8 +11,9 @@ function detectScriptLocation() {
 }
 
 readonly SCRIPT_DIR="$(detectScriptLocation)"
-
-readonly UNRAID_VERSION="6.11.5"
+readonly DEFAULT_RUN="/builder/build-in-docker.sh"
+readonly UNRAID_VERSION="6.12.1"
+#readonly UNRAID_VERSION="6.11.5"
 readonly CONFIG_DIR="${SCRIPT_DIR}/../config"
 readonly OUTPUT_DIR="${SCRIPT_DIR}/../output"
 readonly CACHE_DIR="${SCRIPT_DIR}/../cache"
@@ -31,7 +32,14 @@ function runInDocker(){
     DOCKER_RUN_OPTS="${DOCKER_RUN_OPTS} -v ${HOST_KERNEL_BUILD_SCRIPT}:/opt/scripts/build.sh:Z"
     DOCKER_RUN_OPTS="${DOCKER_RUN_OPTS} --entrypoint="""
 
-    docker run --rm -it \
+    DOCKER_RUN_ARGS=""
+    if [ -z "${1}" ]; then
+        DOCKER_RUN_ARGS="${DOCKER_RUN_ARGS} ${DEFAULT_RUN}"
+    else
+        DOCKER_RUN_ARGS="${@}"
+    fi
+
+    exec docker run --rm -it \
     -v "${CONFIG_DIR}:/config" \
     -v "${OUTPUT_DIR}:/output" \
     -v "${SCRIPT_DIR}:/builder" \
@@ -39,7 +47,7 @@ function runInDocker(){
     -e "CPU_COUNT=4" \
     -v "${CACHE_DIR}:/cache" \
     ${DOCKER_RUN_OPTS} \
-    gameonwhales/unraid-module-builder /builder/build-in-docker.sh $@
+    gameonwhales/unraid-module-builder ${DOCKER_RUN_ARGS}
 }
 
 if [ ! -f /.dockerenv ]; then
@@ -56,25 +64,24 @@ function build_kernel(){
 }
 
 function build_dkms_asustor_it87(){
-    local target_path="/${CACHE_DIR}/asustor_it87"
-    if [ -z "${target_path}" ]; then
-        git clone "${MODUL_GIT_REMOTE}" -b "${MODUL_GIT_BRANCH}" "${target_path}"
-    fi
+    local target_path="$(realpath /${CACHE_DIR}/asustor_it87)"
+    git clone "${MODUL_GIT_REMOTE}" -b "${MODUL_GIT_BRANCH}" "${target_path}"
 
     "${SCRIPT_DIR}/compile.sh" "${target_path}"
 }
 
 function prepare_system(){
     apt update -y
-    apt install -y git
+    apt install -y git binwalk
 }
 
 function main(){
     # Inject dummy execs
     export PATH="${SCRIPT_DIR}/dummy:${PATH}"
 
-    #prepare_system
+    prepare_system
     build_kernel
+    echo $KERNEL_VERSION
     build_dkms_asustor_it87
 }
 

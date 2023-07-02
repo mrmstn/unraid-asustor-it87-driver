@@ -4,7 +4,7 @@ set -e
 readonly BUILD_DIR="${1}"
 readonly PLUGIN_VERSION="2023.06.05"
 readonly OUTPUT_DIR="/output/pkg"
-readonly TARGET_KERNEL="5.19.17-Unraid"
+readonly TARGET_KERNEL="${2:-"6.1.34-Unraid"}"
 readonly BZROOT="/usr/src/stock/${UNRAID_VERSION}/root"
 readonly PKG_BASE="/ite"
 readonly PLUGIN_NAME="asustor-it87-driver"

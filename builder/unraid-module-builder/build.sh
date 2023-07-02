@@ -131,7 +131,7 @@ function fetch_unraid_img() {
         exit 1
     fi
 
-    unzip -o $location/$archive bzroot\* bzfirmware\* &>/dev/null
+    unzip -o $location/$archive bzmodules\* bzroot\* bzfirmware\* &>/dev/null
     # Don't need the -gui image
     rm -f bzroot-gui*
 
@@ -157,37 +157,71 @@ function fetch_unraid_img() {
         exit 2
     fi
 
-    cd $location/root
+    info "Extract: bzroot"
     local bzroot=$location/bzroot
+    unpack_bzroot "${bzroot}" "${location}/root"
+
+    info "Extract: bzmodules"
+    local bzmodules=$location/bzmodules
+    unpack_bzmodules "${bzmodules}" "${location}/root/lib"
+
+    info "Extract: bzfirmware"
+    local bzfirmware=$location/bzfirmware
+    unpack_bzfirmware "${bzfirmware}" "${location}/root/usr"
+
+    info "Extraction complete!"
+}
+
+function unpack_bzfirmware(){
+    local bzfirmware="${1}"
+    local target_dir="${2}"
+
+    info "make room for the modules and firmware"
+    # make room for the modules and firmware
+    # for dir in /lib/modules /lib/firmware; do
+    #     if [ -d $dir ]; then
+    #         rm -rf $dir
+    #     fi
+    #     mkdir $dir
+    # done
+
+    ulimit -n 20480
+    unsquashfs -f -i -d "${target_dir}" "${bzfirmware}"
+}
+
+function unpack_bzroot(){
+    local bzroot="${1}"
+    local target_dir="${2}"
+
+    if [ ! -d "${target_dir}" ]; then
+        mkdir -p "${target_dir}"
+    fi
+
+    pushd "${target_dir}"
 
     info "dd started"
     # dd if=$D/unraid/bzroot bs=512 skip=$(cpio -ivt -H newc < $D/unraid/bzroot 2>&1 > /dev/null | awk '{print $1}') | xzcat | cpio -i -d -H newc --no-absolute-filenames
     local skip_bits="$(cpio -ivt -H newc < $bzroot 2>&1 > /dev/null | awk '{print $1}')"
-    info "skip bits: ${skip_bits}"
+    info "skip bits:  $(($skip_bits*512))"
 
-    # binwalk "${bzroot}"
+    binwalk "${bzroot}"
 
     dd if=$bzroot bs=512 skip=${skip_bits} 2>/dev/null | xzcat | cpio -i -d -H newc --no-absolute-filenames &>/dev/null
     info "dd completed"
 
-    # TODO: it doesn't seem like a good plan to forcibly remove modules from
-    # the container like this... this could use some more investigation
+    popd
+}
 
-    info "make room for the modules and firmware"
-    # make room for the modules and firmware
-    for dir in /lib/modules /lib/firmware; do
-        if [ -d $dir ]; then
-            rm -rf $dir
-        fi
-        mkdir $dir
-    done
+function unpack_bzmodules(){
+    local bzmodules="${1}"
+    local target_dir="${2}"
 
-    info "unsquashfs"
+    if [ ! -d "${target_dir}" ]; then
+        mkdir -p "${target_dir}"
+    fi
 
     ulimit -n 20480
-    echo unsquashfs -f -d /lib/firmware $location/bzfirmware
-    unsquashfs -f -d /lib/firmware $location/bzfirmware
-    info "Extraction complete!"
+    unsquashfs -f -i -d "${target_dir}" "${bzmodules}"
 }
 
 function fetch_kernel_tarball() {
@@ -198,25 +232,25 @@ function fetch_kernel_tarball() {
     local kernel_sign=linux-$version.tar.sign
 
     # if [ ! -s "$dest" ]; then
-        # Get the keys that can be used to verify the signature
-        gpg2 --locate-keys torvalds@kernel.org gregkh@kernel.org &>/dev/null
+    # Get the keys that can be used to verify the signature
+    gpg2 --locate-keys torvalds@kernel.org gregkh@kernel.org &>/dev/null
 
-        info "Fetching kernel v$version"
-        fetch "/tmp/$kernel_tarball" "https://mirrors.edge.kernel.org/pub/linux/kernel/v$major_ver.x/$kernel_tarball"
-        fetch "/tmp/$kernel_sign" "https://mirrors.edge.kernel.org/pub/linux/kernel/v$major_ver.x/$kernel_sign"
+    info "Fetching kernel v$version"
+    fetch "/tmp/$kernel_tarball" "https://mirrors.edge.kernel.org/pub/linux/kernel/v$major_ver.x/$kernel_tarball"
+    fetch "/tmp/$kernel_sign" "https://mirrors.edge.kernel.org/pub/linux/kernel/v$major_ver.x/$kernel_sign"
 
-        # verify the signature
-        gunzip /tmp/$kernel_tarball -v
-        kernel_tarball=$(basename "$kernel_tarball" ".gz")
+    # verify the signature
+    gunzip /tmp/$kernel_tarball -v
+    kernel_tarball=$(basename "$kernel_tarball" ".gz")
 
-        if ! gpg2 --verify /tmp/$kernel_sign &>/dev/null; then
-            error "Couldn't verify kernel signature"
-            exit 5
-        fi
+    if ! gpg2 --verify /tmp/$kernel_sign &>/dev/null; then
+        error "Couldn't verify kernel signature"
+        exit 5
+    fi
 
-        info "Extracting kernel; this may take a bit"
+    info "Extracting kernel; this may take a bit"
 
-        tar -C $dest --strip-components=1 -xf /tmp/$kernel_tarball
+    tar -C $dest --strip-components=1 -xf /tmp/$kernel_tarball
     # else
     #     debug "kernel already extracted: $dest"
     # fi
@@ -245,6 +279,8 @@ KERNEL_VERSION="$(echo $KERNEL_VERSION_STR | cut -d '-' -f 1)"
 if [ "${KERNEL_VERSION##*.}" == "0" ]; then
     KERNEL_VERSION="${KERNEL_VERSION%.*}"
 fi
+
+export KERNEL_VERSION
 
 # Download the matching kernel source tarball
 cd ${SRC_DIR}
